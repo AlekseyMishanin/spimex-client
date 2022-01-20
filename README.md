@@ -1,0 +1,1 @@
+Example of an JAX-RS web application.
