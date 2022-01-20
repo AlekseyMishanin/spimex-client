@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.LoadingCache;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import ru.spimex.models.Organization;
 
@@ -36,8 +36,6 @@ public class SpimexClientImpl implements SpimexClient {
             .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(30))
             .build();
-
-    // TODO add cache
 
     @Override
     @SneakyThrows({IOException.class, InterruptedException.class})
@@ -71,14 +69,30 @@ public class SpimexClientImpl implements SpimexClient {
     }
 
     private Organization toOrganization(OrganizationDto organizationDto) {
+        String inn = organizationDto.getInn();
+        Integer regionId = getRegionIdOrNull(inn);
         return Organization.builder()
                 .id(organizationDto.getId())
                 .name(organizationDto.getName())
-                .inn(organizationDto.getInn())
+                .inn(inn)
+                .regionId(regionId)
                 .residence(organizationDto.getResidence())
                 .storeDate(organizationDto.getStoreDate())
                 .blockDate(organizationDto.getBlockDate())
                 .build();
+    }
+
+    private Integer getRegionIdOrNull(String inn) {
+        if (inn == null || inn.isEmpty()) {
+            return null;
+        }
+        Integer regionId = null;
+        try {
+            regionId = Integer.parseInt(inn.substring(0, 2));
+        } catch (NumberFormatException e) {
+            // do nothing
+        }
+        return regionId;
     }
 
     @Getter
